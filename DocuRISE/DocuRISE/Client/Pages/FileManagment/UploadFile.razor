@@ -1,0 +1,232 @@
+﻿@page "/upload"
+@using System.IO
+@using System.Net
+@using System.Net.Http.Json
+@using System.Runtime.CompilerServices
+@using DocuRISE.Shared.Models;
+@using DocuRISE.Client;
+@using DocuRISE.Shared.Models.Document
+@using DocuRISE.Shared.Models.User
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using static DocuRISE.Common.GlobalConstants
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRunTime
+@attribute [Authorize(Roles = FacilityManagerRoleName)]
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger @GetAlertStyle() alert-dismissible" role="alert">
+        <div class="d-flex justify-content-between">
+            <p>@ErrorMessage</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="HideAlert"></button>
+        </div>
+    </div>
+}
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <div class="alert alert-success @GetAlertStyle() alert-dismissible" role="alert">
+        <div class="d-flex justify-content-between">
+            <p>@SuccessMessage!</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="HideAlert"></button>
+        </div>
+    </div>
+}
+
+<div class="container">
+    <EditForm class="form" Model="@filePdf">
+        <ErrorsList ShowErrors="ShowErrors" Errors="Errors" />
+        <SuccessList ShowSuccess="ShowSuccess" Successses="Successses" />
+        <h3 class="title">Upload</h3>
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-building"></i>
+                <label for="CompanyName">Company name</label>
+            </div>
+            <InputText class="input" id="CompanyName" @bind-Value="@filePdf.CompanyName" />
+        </div>
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-filter"></i>
+                <label for="DocumentType">Document Type</label>
+            </div>
+            <InputSelect id="DocumentType" @bind-Value="@filePdf.DocumentTypeId">
+                <option value="">Choose a document type</option>
+                @foreach (var type in types)
+                {
+                    <option value="@type.Id">@type.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-file"></i>
+                <label for="File">File</label>
+            </div>
+            <InputFile OnChange="@GetChosenFile"></InputFile>
+        </div>
+        <button @onclick="() => HandleFile(chosenFile)" class="button">Upload File</button>
+    </EditForm>
+</div>
+
+
+@code {
+    private string ErrorMessage { get; set; }
+    private string SuccessMessage { get; set; }
+    private List<DocumentTypeServiceModel> types = new List<DocumentTypeServiceModel>();
+    private FileUploadModel filePdf = new FileUploadModel();
+    private IBrowserFile chosenFile = null;
+    private bool inDb = true;
+    private bool isPdf = false;
+    bool DisplayAlert = true;
+
+    string GetAlertStyle()
+    {
+        return DisplayAlert ? string.Empty : "alert-hidden";
+    }
+
+    void HideAlert()
+    {
+        DisplayAlert = false;
+        ErrorMessage = string.Empty;
+        DisplayAlert = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        types = await GetDocumentType();
+        StateHasChanged();
+    }
+
+    private async Task<List<DocumentTypeServiceModel>> GetDocumentType()
+    {
+        try
+        {
+            return await HttpClient.GetFromJsonAsync<List<DocumentTypeServiceModel>>("/api/files/documentTypes");
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "An error occurred while retrieving document type.";
+            return new List<DocumentTypeServiceModel>();
+        }
+    }
+
+    private async Task GetChosenFile(InputFileChangeEventArgs e)
+    {
+        if(e.File == null)
+        {
+            chosenFile = null;
+        }
+        await IsFileAlreadyInDb(e.File.Name);
+        await IsFilePdf(e.File);
+
+        if (!inDb && isPdf && e.File.Size < 512000)
+        {
+            chosenFile = e.File;
+        }
+        else
+        {
+            chosenFile = null;
+            string errorForUser = string.Empty;
+            if (inDb) errorForUser += "File already exists!\n";
+            if (!isPdf) errorForUser += "Supplied file is not a PDF file.\n";
+            if (e.File.Size > 512000) errorForUser += "Supplied file exceeds the maximum of 500KB.\n";
+            ErrorMessage = errorForUser + "\nPlease choose another file.";
+        }
+    }
+
+    private async Task HandleFile(IBrowserFile e)
+    {
+        if (e == null)
+        {
+            ErrorMessage = "No appropriate file was selected";
+            return;
+        }
+
+        var file = e;
+        using var content = new MultipartFormDataContent();
+        var memoryStream = new MemoryStream();
+
+        try
+        {
+            await file.OpenReadStream().CopyToAsync(memoryStream);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw;
+        }
+
+        var byteContent = new ByteArrayContent(memoryStream.ToArray());
+        byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+
+        content.Add(content: byteContent, name: "file", fileName: file.Name);
+
+        var response = await HttpClient.PostAsync("/api/files/upload", content);
+        var responseReturned = await response.Content.ReadAsStringAsync();
+
+        if (responseReturned != string.Empty)
+        {
+            var document = new FileUploadModel
+                {
+                    FileName = e.Name,
+                    Path = responseReturned,
+                    CompanyName = filePdf.CompanyName,
+                    DocumentTypeId = filePdf.DocumentTypeId
+                };
+
+            var finalresponse = await HttpClient.PostAsJsonAsync("/api/files", document);
+
+            if (!finalresponse.IsSuccessStatusCode)
+            {
+                if (finalresponse.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorResponse = await finalresponse.Content.ReadAsStringAsync();
+                    ErrorMessage = errorResponse;
+                }
+                else
+                {
+                    ErrorMessage = "Failed to upload the file in database. Please try again.";
+                }
+            }
+            else
+            {
+                SuccessMessage = "You successfully uploaded a file!";
+                NavigationManager.NavigateTo("/files");
+            }
+        }
+    }
+
+    private async Task IsFileAlreadyInDb(string fileName)
+    {
+        var response = await HttpClient.GetAsync($"/api/files/exists/{fileName}");
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            inDb = false;
+        }
+        else
+        {
+            inDb = true;
+        }
+    }
+
+    private async Task IsFilePdf(IBrowserFile file)
+    {
+        if (file.ContentType == "application/pdf")
+        {
+            isPdf = true;
+        }
+        else 
+        {
+            isPdf = false;
+        }
+    }
+}
+
+
+

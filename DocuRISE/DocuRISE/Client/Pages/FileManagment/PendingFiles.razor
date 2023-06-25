@@ -1,0 +1,42 @@
+﻿@page "/pending"
+@inherits AllFiles
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Authorization
+@using static DocuRISE.Common.GlobalConstants
+@inject IJSRuntime jsRun
+@inject NavigationManager navManager
+@attribute [Authorize(Roles = FacilityManagerRoleName)]
+
+
+@{
+        base.BuildRenderTree(__builder);
+}
+
+@code {
+    private IJSRuntime? js;
+    private readonly string statusPending = "Pending";
+    private readonly string statusDropdownId = "status-select";
+
+    protected override Task OnInitializedAsync()
+    {
+        js = jsRun;
+        SetStatusPending();
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await js.InvokeVoidAsync("removeFromDom", statusDropdownId);
+        }
+    }
+
+    private Task SetStatusPending()
+    {
+        filterModel.FilteredByStatus = statusPending;
+        return Task.CompletedTask;
+    } 
+
+}

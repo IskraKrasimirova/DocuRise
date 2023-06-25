@@ -1,0 +1,52 @@
+System.IO.FileNotFoundException: Could not find file 'C:\Users\Dimitar Genov\source\repos\dw-rise-project\DocuRISE\DocuRISE\Server\SavedFiles\spm3nu0j.emd'.
+File name: 'C:\Users\Dimitar Genov\source\repos\dw-rise-project\DocuRISE\DocuRISE\Server\SavedFiles\spm3nu0j.emd'
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategy(FileStream fileStream, String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+   at System.IO.FileStream..ctor(String path, FileMode mode)
+   at DocuRISE.Server.Controllers.FileController.DownloadFile(String fileName) in C:\Users\Dimitar Genov\source\repos\dw-rise-project\DocuRISE\DocuRISE\Server\Controllers\FileController.cs:line 265
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.Policy.AuthorizationMiddlewareResultHandler.HandleAsync(RequestDelegate next, HttpContext context, AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Duende.IdentityServer.Hosting.IdentityServerMiddleware.Invoke(HttpContext context, IEndpointRouter router, IUserSession session, IEventService events, IIssuerNameService issuerNameService, IBackChannelLogoutService backChannelLogoutService) in /_/src/IdentityServer/Hosting/IdentityServerMiddleware.cs:line 102
+   at Duende.IdentityServer.Hosting.MutualTlsEndpointMiddleware.Invoke(HttpContext context, IAuthenticationSchemeProvider schemes) in /_/src/IdentityServer/Hosting/MutualTlsEndpointMiddleware.cs:line 94
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Duende.IdentityServer.Hosting.DynamicProviders.DynamicSchemeAuthenticationMiddleware.Invoke(HttpContext context) in /_/src/IdentityServer/Hosting/DynamicProviders/DynamicSchemes/DynamicSchemeAuthenticationMiddleware.cs:line 47
+   at Duende.IdentityServer.Hosting.BaseUrlMiddleware.Invoke(HttpContext context) in /_/src/IdentityServer/Hosting/BaseUrlMiddleware.cs:line 31
+   at Microsoft.AspNetCore.Authorization.Policy.AuthorizationMiddlewareResultHandler.HandleAsync(RequestDelegate next, HttpContext context, AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddleware.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: */*
+Host: localhost:7025
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57
+:method: GET
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiZGdAYWJ2LmJnIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiRmFjaWxpdHlNYW5hZ2VyIiwiZXhwIjoxNjg1NzEyNTg3LCJpc3MiOiJodHRwczovL2xvY2FsaG9zdCIsImF1ZCI6Imh0dHBzOi8vbG9jYWxob3N0In0.ewAoU02DEx-yLmQvxLl_FSdnNJaF7lft9RCsQo04UZY
+Cookie: idsrv.session=BE09FE93FC9C170E20468B1CDF260DBC,.AspNetCore.Identity.Application=CfDJ8FjvdvBTzC5Bl-nJIz8vu7MNe7ftWVL1wIkPJRRmoVpRE2vH9MWEZ6Qrgn4uP8AbfoYzh7CcCWQoqAMcu4D97RYB0-f6EtuQzVhVLyGOuKshO_CWUvkonpBsQKP-63APRtPA5btHZcsbSsxSO5k5IFsckjIg_RbDUWPju9RdlQeX4eNP34p67b5kC0yEiFboCZGaen1l1Q3w2NnK2Av7on5yvq3zvM43APJYeqgZ3lLzri9cmlWLJ8A74Mbwc7ERJyfpyW4r4r2zCknK1HZL5iEOdcYiMBwo4zv3V5LQqyCoYQxRORFzdrL2u473v9P_Qb0I8U6CHSaPojZaboaMOX6-_PqLK0FqfGjNzd6Md0SoX7JgS6pUFvzhSb5Fp883k8qJiRyWgO8OZ8dPjmgncSP6FFtJ_oM-RP2YAuVO4t1FFOHfAljXyFMXpBP8ZhvMy1J5V-2IjiX8Edy6ueqGsjI-ILHw-uYNF9dBNvDeW_ua3Ukdvad0tZpWFZn-SZ33HjQGVKbU1TX2DQRxq9S5tJ5jc-MIEyssRGWb8WukrgZ9QHlo9Eb0op53-RWAS2rtm5CPDghC1q_R9y_FVscfv6gnPedYfhk5LTT9S_rNXeI0UhYhDyMzCQp4tQheGVaPwnToANGdqFASypJC2WWAOQ0LvKw5vkOPPcAnMTaEWkvFrvpJfoofOhDrh4R8pNhM08pWCHsB8_YBTl4YKN_kq8nU5_HXpyVZ5b-FuhNF2utWq3jZAP__0CGEAi41WjnDS7z8_32N-dLuHwPWdVv9qJRVKkvherP5rIsEBuRhwCHhZ1Ym1AwBsOPqDsXo_NTzWk9Ar-aOR1DWX7MbfQM8P2tPUx5QCu5zzickoqxJyi6b6pZ0go7_XNWDgdHP5cejReLiEdYMj9zStWsyOG9Ng3YiK0-2Fo9IZlIErFjVVseHjYhzjf7gNGzU29WLu993Ezpx9xkZHbhaP2gUfljCAIgz4sUngKMDtKaS-gN7VSKKlrGCpydOppcGQO_0zC_Rx5NMCzAMtIYZBlNfW6v7J9quKGar3uikHXkqd45HfCmj
+Referer: https://localhost:7025/allfiles
+sec-ch-ua: "Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty

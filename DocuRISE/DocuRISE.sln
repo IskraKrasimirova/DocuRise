@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Server", "DocuRISE\Server\DocuRISE.Server.csproj", "{FB88BD39-5730-4144-A832-933D13F5CFCB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Client", "DocuRISE\Client\DocuRISE.Client.csproj", "{43A6AD47-F7F7-4D7A-A6B8-1353010A1B6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Shared", "DocuRISE\Shared\DocuRISE.Shared.csproj", "{B615C977-CD95-4938-9555-9AE20696E117}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Data", "DocuRISE.Data\DocuRISE.Data.csproj", "{AB2B91DC-5C42-414C-85FF-44801C7E73BF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Core", "DocuRISE.Core\DocuRISE.Core.csproj", "{F56E5392-CDED-464D-AF82-7C5584835895}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Common", "DocuRISE.Common\DocuRISE.Common.csproj", "{2B8FE6DD-893A-4E05-8B34-08D43762D9F3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocuRISE.Tests", "DocuRISE.Tests\DocuRISE.Tests.csproj", "{5058ADCF-61B2-4AC4-812F-880300765413}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FB88BD39-5730-4144-A832-933D13F5CFCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB88BD39-5730-4144-A832-933D13F5CFCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB88BD39-5730-4144-A832-933D13F5CFCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB88BD39-5730-4144-A832-933D13F5CFCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43A6AD47-F7F7-4D7A-A6B8-1353010A1B6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43A6AD47-F7F7-4D7A-A6B8-1353010A1B6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43A6AD47-F7F7-4D7A-A6B8-1353010A1B6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43A6AD47-F7F7-4D7A-A6B8-1353010A1B6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B615C977-CD95-4938-9555-9AE20696E117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B615C977-CD95-4938-9555-9AE20696E117}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B615C977-CD95-4938-9555-9AE20696E117}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B615C977-CD95-4938-9555-9AE20696E117}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB2B91DC-5C42-414C-85FF-44801C7E73BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB2B91DC-5C42-414C-85FF-44801C7E73BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB2B91DC-5C42-414C-85FF-44801C7E73BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB2B91DC-5C42-414C-85FF-44801C7E73BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F56E5392-CDED-464D-AF82-7C5584835895}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F56E5392-CDED-464D-AF82-7C5584835895}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F56E5392-CDED-464D-AF82-7C5584835895}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F56E5392-CDED-464D-AF82-7C5584835895}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B8FE6DD-893A-4E05-8B34-08D43762D9F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B8FE6DD-893A-4E05-8B34-08D43762D9F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B8FE6DD-893A-4E05-8B34-08D43762D9F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B8FE6DD-893A-4E05-8B34-08D43762D9F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5058ADCF-61B2-4AC4-812F-880300765413}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5058ADCF-61B2-4AC4-812F-880300765413}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5058ADCF-61B2-4AC4-812F-880300765413}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5058ADCF-61B2-4AC4-812F-880300765413}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0AA62762-1E3E-404A-9322-665C2FEF7B56}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,224 @@
+﻿@page "/register"
+@using DocuRISE.Client.Services;
+@using DocuRISE.Shared.Models.User
+@using System.Net
+@using Microsoft.AspNetCore.Authorization;
+@using static DocuRISE.Common.GlobalConstants
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@attribute [Authorize(Roles = $"{FacilityManagerRoleName}, {CompanyManagerRoleName}")]
+
+<div class="container-register">
+    <EditForm class="form-register" Model="@RegisterModel" OnValidSubmit="HandleRegistration">
+        <h3 class="title">Register</h3>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <Alert ShowAlert="@ShowErrors" ShowAlertChanged="@((bool value) => ShowErrors = value)" Messages="@Errors" AlertType="alert-danger" />
+        <Alert ShowAlert="@ShowSuccess" ShowAlertChanged="@((bool value) => ShowSuccess = value)" Messages="@Success" AlertType="alert-success" />
+        <div class="register-content">
+            <div class="content">
+                <div class="field">
+                    <div class="label-input">
+                        <i class="fas fa-user"></i>
+                        <label for="FirstName">First name</label>
+                    </div>
+                    <InputText class="input" id="FirstName" @bind-Value="@RegisterModel.FirstName" />
+                </div>
+                <div class="field">
+                    <div class="label-input">
+                        <i class="fas fa-user"></i>
+                        <label for="LastName">Last name</label>
+                    </div>
+                    <InputText class="input" id="LastName" @bind-Value="@RegisterModel.LastName" />
+                </div>
+                <div class="field">
+                    <div class="label-input">
+                        <i class="fas fa-envelope"></i>
+                        <label for="Email">Email</label>
+                    </div>
+                    <InputText class="input" id="Email" @bind-Value="@RegisterModel.Email" />
+                </div>
+            </div>
+            <div class="content">
+                <div class="field">
+                    <div class="label-input">
+                        <i class="fas fa-angle-double-down"></i>
+                        <label for="RoleId">Role</label>
+                    </div>
+                    <InputSelect class="input" ValueExpression="@(() => RegisterModel.RoleId)"
+                                 Value="@RegisterModel.RoleId"
+                                 ValueChanged="@((string value) => OnValueChanged(value))">
+                        <option value="">Choose a role</option>
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role.Id">@role.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="field">
+                    <div class="label-input">
+                        <i class="fas fa-building"></i>
+                        <label for="CompanyName">Company name</label>
+                    </div>
+                    <InputText class="input" id="CompanyName" @bind-Value="@RegisterModel.CompanyName" disabled="@isDisabled" />
+                </div>
+                <div class="register-button">
+                    <button type="submit" class="button">Register</button>
+                </div>
+            </div>
+        </div>
+
+    </EditForm>
+</div>
+
+
+@code {
+
+    protected UserRegisterRequestModel RegisterModel = new UserRegisterRequestModel();
+
+    private bool ShowErrors;
+    private IEnumerable<string> Errors;
+
+    private bool ShowSuccess;
+    private IEnumerable<string> Success;
+
+
+    private List<RoleServiceModel> roles = new List<RoleServiceModel>();
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+    private string companyName = string.Empty;
+    private bool isDisabled = false;
+
+    private async Task HandleRegistration()
+    {
+        ShowErrors = false;
+        ShowSuccess = false;
+
+        var result = await AuthService.Register(RegisterModel);
+
+        if (result.Successful)
+        {
+            RegisterModel.RoleId = default;
+            RegisterModel.FirstName = string.Empty;
+            RegisterModel.LastName = string.Empty;
+            RegisterModel.Email = string.Empty;
+            RegisterModel.CompanyName = string.Empty;
+            isDisabled = false;
+
+            Success = result.Success;
+            ShowSuccess = true;
+        }
+        else
+        {
+            Errors = result.Errors;
+            ShowErrors = true;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allRoles = await GetRoles();
+        roles = allRoles
+        .Where(r => r.Name != FacilityManagerRoleName)
+        .ToList();
+
+        if (authenticationState is not null)
+        {
+            var authState = await authenticationState;
+            var user = authState?.User;
+
+            if (user is not null && user.IsInRole(FacilityManagerRoleName))
+            {
+                roles = roles
+                .Where(r => r.Name != CompanyStaffRoleName)
+                .ToList();
+            }
+
+            if (user is not null && user.IsInRole(CompanyManagerRoleName))
+            {
+                roles = roles
+                .Where(r => r.Name == CompanyStaffRoleName)
+                .ToList();
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnValueChanged(string value)
+    {
+        RegisterModel.RoleId = value;
+
+        if (authenticationState is not null)
+        {
+            var authState = await authenticationState;
+            var user = authState?.User;
+
+            if (user is not null && user.IsInRole(FacilityManagerRoleName))
+            {
+                var facilityAccountantRole = roles
+                .Where(r => r.Name == FacilityAccountantRoleName)
+                .FirstOrDefault();
+
+                if (value == facilityAccountantRole.Id)
+                {
+                    await FixCompanyName();
+                }
+            }
+
+            if (user is not null && user.IsInRole(CompanyManagerRoleName))
+            {
+                var companyStaffRole = roles
+                .Where(r => r.Name == CompanyStaffRoleName)
+                .FirstOrDefault();
+
+                if (value == companyStaffRole.Id)
+                {
+                    await FixCompanyName();
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task FixCompanyName()
+    {
+        var userCompany = await GetCompanyByUser();
+        companyName = userCompany.Name;
+
+        RegisterModel.CompanyName = companyName;
+        this.isDisabled = true;
+    }
+
+    private async Task<List<RoleServiceModel>> GetRoles()
+    {
+        try
+        {
+            var result = await HttpClient.GetFromJsonAsync<List<RoleServiceModel>>("/api/users/roles");
+            return result;
+        }
+        catch (Exception)
+        {
+            Errors = new List<string> { "An error occurred while retrieving roles." };
+            return new List<RoleServiceModel>();
+        }
+    }
+
+    private async Task<CompanyServiceModel> GetCompanyByUser()
+    {
+        try
+        {
+            var result = await HttpClient.GetFromJsonAsync<CompanyServiceModel>("/api/users/company");
+            return result;
+        }
+        catch (Exception)
+        {
+            Errors = new List<string> { "An error occurred while retrieving company." };
+            return new CompanyServiceModel();
+        }
+    }
+}

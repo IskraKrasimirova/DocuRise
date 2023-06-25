@@ -1,0 +1,447 @@
+﻿@page "/files"
+@using System.IO
+@using System.Net.Http.Json
+@using DocuRISE.Client.Features;
+@using DocuRISE.Server.RequestFeatures;
+@using DocuRISE.Shared.Models.Document;
+@using DocuRISE.Client;
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.Extensions.DependencyInjection
+@using static DocuRISE.Common.GlobalConstants
+@using System.Text.Json
+@using System.Text;
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRunTime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+
+<h3 class="title">Documents</h3>
+
+<AuthorizeView Roles="@FacilityManagerRoleName">
+    <UploadButton />
+</AuthorizeView>
+<div class="searchbar-container">
+    <EditForm class="searchbar" Model="@filterModel" Context="search_by_company_name">
+        <div class="search-inputs">
+            <input type="search" class="search-input" placeholder="Search by file name" @bind="@searchStringFile"
+                   @onkeydown="@((KeyboardEventArgs e) => FilteredFiles(FixSearchString(e, false), filterModel.FilteredByCompanyName, filterModel.FilteredByType, filterModel.FilteredByStatus))" />
+
+            <AuthorizeView Roles="@FacilityManagerAndAccountantRoles">
+                <input type="search" class="search-input" placeholder="Search by company name" @bind="@searchStringCompany"
+                       @onkeydown="@((KeyboardEventArgs e) => FilteredFiles(filterModel.FilteredByFileName, FixSearchString(e, true), filterModel.FilteredByType, filterModel.FilteredByStatus))" />
+            </AuthorizeView>
+            <AuthorizeView Roles="@BothManagerRoles" Context="search_by_documentType_and_status">
+                <InputSelect class="select-dropdown" ValueExpression="@(() => filterModel.FilteredByType)" Value="@filterModel.FilteredByType"
+                             ValueChanged="@((string e) => FilteredFiles(filterModel.FilteredByFileName, filterModel.FilteredByCompanyName, e, filterModel.FilteredByStatus))">
+
+                    <option value="@string.Empty">Type</option>
+                    @foreach (var type in types)
+                    {
+                        <option value="@type.Name">@type.Name</option>
+                    }
+                </InputSelect>
+                <InputSelect class="select-dropdown" id="status-select" ValueExpression="@(() => filterModel.FilteredByStatus)" Value="@filterModel.FilteredByStatus"
+                             ValueChanged="@((string e) => FilteredFiles(filterModel.FilteredByFileName, filterModel.FilteredByCompanyName, filterModel.FilteredByType, e))">
+                    <option value="@string.Empty">Status</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Done">Done</option>
+                </InputSelect>
+            </AuthorizeView>
+        </div>
+    </EditForm>
+</div>
+
+@if (files.Count != 0)
+{
+    <div class="table-container">
+        <table>
+            <thead class="table-headers">
+                <tr class="table-row">
+                    <th class="table-col-headers">
+                        File Name
+                        <img class="sorting-image" src="@ImageSortname" onclick="@(async () => await SortingTable("FileName"))" />
+                    </th>
+                    <th class="table-col-headers">
+                        Company
+                        <img class="sorting-image" src="@ImageSortname" onclick="@(async () => await SortingTable("Company"))" />
+                    </th>
+                    <th class="table-col-headers">Document type</th>
+                    <th class="table-col-headers">Status</th>
+                    <th class="table-col-headers"></th>
+                    <th class="table-col-headers"></th>
+                    <th class="table-col-headers"></th>
+                    <th class="table-col-headers"></th>
+                </tr>
+            </thead>
+            <tbody class="table-body">
+                @foreach (var file in files)
+                {
+                    <tr class="table-row">
+                        @if (@file.FileName.Length + @file.CompanyName.Length > 47)
+                        {
+                            @if (@file.FileName.Length > 27 && @file.CompanyName.Length > 20)
+                            {
+                                <td class="table-col-input">
+                                    @file.FileName.Substring(0, 24)
+                                    <button type="button" class="btn btn-outline-info btn-sm btn-outline-primary py-0" @onclick="() => OpenModalDialog(file.FileName)"><b>...</b></button>
+                                </td>
+                                <td class="table-col-input">
+                                    @file.CompanyName.Substring(0, 17)
+                                    <button type="button" class="btn btn-outline-info btn-sm btn-outline-primary py-0" @onclick="() => OpenModalDialog(file.CompanyName)"><b>...</b></button>
+                                </td>
+                            }
+                            else if (@file.FileName.Length > 27 && @file.CompanyName.Length <= 20)
+                            {
+                                <td class="table-col-input">
+                                    @file.FileName.Substring(0, 24)
+                                    <button type="button" class="btn btn-outline-info btn-sm btn-outline-primary py-0" @onclick="() => OpenModalDialog(file.FileName)"><b>...</b></button>
+                                </td>
+                                <td class="table-col-input">@file.CompanyName</td>
+                            }
+                            else if (@file.FileName.Length <= 27 && @file.CompanyName.Length > 20)
+                            {
+                                <td class="table-col-input">@file.FileName</td>
+                                <td class="table-col-input">
+                                    @file.CompanyName.Substring(0, 17)
+                                    <button type="button" class="btn btn-outline-info btn-sm btn-outline-primary py-0" @onclick="() => OpenModalDialog(file.CompanyName)"><b>...</b></button>
+                                </td>
+                            }
+                        }
+                        else
+                        {
+                            <td class="table-col-input">@file.FileName</td>
+                            <td class="table-col-input">@file.CompanyName</td>
+                        }
+                        <td class="table-col-input">@file.DocumentType</td>
+                        <td class="table-col-input">@file.Status</td>
+                        <td class="table-col-input">
+                            <AuthorizeView Roles="@FacilityManagerRoleName">
+                                @if (@file.Status == "Rejected")
+                                {
+                                    <i class="btn btn-outline-success" style="margin-top:2px; margin-left:10px" @onclick="@(()=>ApproveSelectedDocument(file.FileName))" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        </svg>
+                                    </i>
+                                }
+                                else if (@file.Status == "Approved")
+                                {
+                                    <i class="bi bi-x btn btn-outline-danger" style="margin-top:2px; margin-left:10px" @onclick="@(()=>RejectSelectedDocument(file.FileName))" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </i>
+                                }
+                                else if (@file.Status == "Pending")
+                                {
+                                    <i class="btn btn-outline-success" style="margin-top:2px; margin-left:10px" @onclick="@(()=>ApproveSelectedDocument(file.FileName))" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        </svg>
+                                    </i>
+                                    <i class="bi bi-x btn btn-outline-danger" style="margin-top:2px; margin-left:10px" @onclick="@(()=>RejectSelectedDocument(file.FileName))" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </i>
+                                }
+                            </AuthorizeView>
+                            <AuthorizeView Roles="@FacilityAccountantRoleName">
+                                @if (file.Status != "Done")
+                                {
+                                    <i class="btn btn-outline-success" style="margin-top:2px; margin-left:10px" @onclick="@(() => SetInvoiceDone(file.FileName))" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                                        </svg>
+                                    </i>
+                                }
+
+                            </AuthorizeView>
+                        </td>
+                        <AuthorizeView Roles="@FacilityManagerRoleName">
+                            <td class="table-col-input">
+                                <NavLink href="@($"/edit/{file.Id}")" class="btn btn-outline-info ms-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+                                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z" />
+                                    </svg>
+                                </NavLink>
+                            </td>
+                        </AuthorizeView>
+                        <td class="table-col-input">
+                            <NavLink href="@($"/pdfViewer/{file.FileName}")" class="btn btn-outline-warning ms-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
+                                </svg>
+                            </NavLink>
+                        </td>
+                        <td class="table-col-input">
+                            <i class="btn btn-outline-primary ms-3" @onclick="@(() => DownloadSelectedFile(file.FileName))">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+                                </svg>
+                            </i>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <h4 class="text-message">No documents found</h4>
+    <div class="no-files-background-image">
+    </div>
+}
+
+<div class="row">
+    <div class="col">
+        <Pagination MetaData="MetaData" Spread="2" SelectedPage="SelectedPage" />
+    </div>
+</div>
+
+@if (ModalDialogOpen)
+{
+    <ModalDialog Title="Selected Item Full Name" Text="@selectedItem" OnClose="@OnModalDialogClose">
+    </ModalDialog>
+}
+
+@code {
+    private List<FileListingModel> files = new List<FileListingModel>();
+    private List<DocumentTypeServiceModel> types = new List<DocumentTypeServiceModel>();
+    private string searchStringFile = string.Empty;
+    private string searchedFile = string.Empty;
+    private string searchStringCompany = string.Empty;
+    private string searchedCompany = string.Empty;
+    protected FilterModel filterModel = new FilterModel(string.Empty, string.Empty, string.Empty, string.Empty);
+    private string selectedItem = string.Empty;
+    public bool ModalDialogOpen { get; set; }
+    private string currentUserRole;
+    private readonly JsonSerializerOptions _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+    public MetaData MetaData { get; set; } = new MetaData();
+    private EntityParameters _entityParameters = new EntityParameters();
+
+    private void OnModalDialogClose(bool accepted)
+    {
+        ModalDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenModalDialog(string fileName)
+    {
+        ModalDialogOpen = true;
+        selectedItem = fileName;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        types = await GetDocumentTypes();
+        StateHasChanged();
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            currentUserRole = user.FindFirst(c => c.Type.Contains("role"))?.Value;
+        }
+        await GetDocuments();
+    }
+
+    private async Task GetDocuments()
+    {
+        var queryStringParam = new Dictionary<string, string>
+            {
+                ["pageNumber"] = _entityParameters.PageNumber.ToString()
+            };
+
+        var response = await HttpClient.PostAsJsonAsync(QueryHelpers.AddQueryString("/api/files/all", queryStringParam), filterModel);
+        var serializeTuple = JsonSerializer.Deserialize<Tuple<List<FileListingModel>, List<FileListingModel>>>(response.Content.ReadAsStream(), _options);
+        var pagingResponse = new PagingResponse<FileListingModel>
+            {
+                Items = serializeTuple.Item1,
+                MetaData = JsonSerializer.Deserialize<MetaData>(response.Headers.GetValues("X-Pagination").First(), _options)
+            };
+
+        MetaData = pagingResponse.MetaData;
+        files = pagingResponse.Items;
+        Console.WriteLine();
+    }
+
+    private async Task SelectedPage(int page)
+    {
+        _entityParameters.PageNumber = page;
+        await GetDocuments();
+    }
+
+    private async Task DownloadSelectedFile(string fileName)
+    {
+        var response = await HttpClient.GetAsync($"/api/files/download/{fileName}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            await jsRunTime.InvokeVoidAsync("alert", "File Fetch Failed");
+        }
+
+        var resultStream = await response.Content.ReadAsStreamAsync();
+
+        using (var streamRef = new DotNetStreamReference(stream: resultStream))
+        {
+            await jsRunTime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        }
+    }
+
+    private async Task FilteredFiles(string searchFile, string searchCompany, string type, string status)
+    {
+        filterModel.FilteredByFileName = searchFile;
+        filterModel.FilteredByCompanyName = searchCompany;
+        filterModel.FilteredByType = type;
+        filterModel.FilteredByStatus = status;
+        var response = await HttpClient.PostAsJsonAsync("/api/files/all", filterModel);
+        await SelectedPage(1);
+        searchStringFile = searchFile;
+        searchStringCompany = searchCompany;
+    }
+
+    private async Task SerializeResponseIntoList(HttpResponseMessage responseMessage)
+    {
+        var returnedlist = await responseMessage.Content.ReadAsStringAsync();
+
+        List<FileListingModel>? renderedFiles = JsonSerializer.Deserialize<List<FileListingModel>>(returnedlist, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+
+        files = renderedFiles!;
+    }
+
+    private string FixSearchString(KeyboardEventArgs e, bool isCompanyNameSearch)
+    {
+        if (e.Code.Contains("Digit") || e.Code.Contains("Key") || e.Code.Contains("Minus") || e.Code.Contains("Underline"))
+        {
+            if (isCompanyNameSearch)
+            {
+                searchedCompany += e.Key;
+            }
+            else
+            {
+                searchedFile += e.Key;
+            }
+
+        }
+
+        if (e.Code == "Backspace")
+        {
+            if (searchStringFile.Length != 0 || searchStringCompany.Length != 0)
+            {
+                if (isCompanyNameSearch)
+                {
+                    searchedCompany = searchStringCompany.Remove(searchStringCompany.Length - 1);
+                }
+                else
+                {
+                    searchedFile = searchStringFile.Remove(searchStringFile.Length - 1);
+                }
+
+            }
+        }
+
+        if (searchedFile.Length == 0)
+        {
+            searchedFile = string.Empty;
+        }
+
+        if (searchedCompany.Length == 0)
+        {
+            searchedCompany = string.Empty;
+        }
+        if (isCompanyNameSearch)
+        {
+            return searchedCompany;
+        }
+        else
+        {
+            return searchedFile;
+        }
+    }
+
+    private async Task ApproveSelectedDocument(string fileName)
+    {
+        var result = await HttpClient.PostAsJsonAsync("api/files/approve", fileName);
+        var response = await HttpClient.PostAsJsonAsync("/api/files/all", filterModel);
+        await GetDocuments();
+    }
+
+    private async Task RejectSelectedDocument(string fileName)
+    {
+        var result = await HttpClient.PostAsJsonAsync("api/files/reject", fileName);
+        var response = await HttpClient.PostAsJsonAsync("/api/files/all", filterModel);
+        await GetDocuments();
+    }
+
+    private async Task SetInvoiceDone(string fileName)
+    {
+        var result = await HttpClient.PostAsJsonAsync("api/files/setDone", fileName);
+        var response = await HttpClient.PostAsJsonAsync("/api/files/all", filterModel);
+        await GetDocuments();
+    }
+
+    private async Task<List<DocumentTypeServiceModel>> GetDocumentTypes()
+    {
+        try
+        {
+            var response = await HttpClient.GetFromJsonAsync<List<DocumentTypeServiceModel>>("/api/files/documentTypes");
+            return response!;
+        }
+
+        catch (Exception)
+        {
+            // ErrorMessage = "An error occurred while retrieving document type.";
+            return new List<DocumentTypeServiceModel>();
+        }
+    }
+
+
+    FileListingModel sortingModel = new FileListingModel();
+    int stageSorting = 0;
+    string ImageSortname = "../images/ascending-sort.png";
+
+    protected async Task SortingTable(string SortColumn)
+    {
+        if (stageSorting == 0)
+        {
+            ImageSortname = "../images/descending-sort.png";
+            stageSorting = 1;
+
+            switch (SortColumn)
+            {
+                case "FileName":
+                    files = files.OrderBy(x => x.FileName).ToList();
+                    break;
+                case "Company":
+                    files = files.OrderBy(x => x.CompanyName).ToList();
+                    break;
+            }
+        }
+        else
+        {
+            ImageSortname = "../images/ascending-sort.png";
+            stageSorting = 0;
+
+            switch (SortColumn)
+            {
+                case "FileName":
+                    files = files.OrderByDescending(x => x.FileName).ToList();
+                    break;
+                case "Company":
+                    files = files.OrderByDescending(x => x.CompanyName).ToList();
+                    break;
+            }
+        }
+    }
+}

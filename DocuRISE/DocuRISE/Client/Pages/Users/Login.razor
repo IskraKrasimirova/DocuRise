@@ -1,0 +1,71 @@
+﻿@page "/login"
+@using DocuRISE.Client.Services;
+@using DocuRISE.Shared.Models.User
+@using System.Net
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider authenticationStateProvider
+@layout NoMenuLayout
+@using static DocuRISE.Common.GlobalConstants
+
+<div class="container">
+    <EditForm class="form" Model="@loginModel" OnValidSubmit="HandleLogin">
+        <h2 class="title">Login</h2>
+        <img src="../images/avatar.png" alt="avatar" class="avatar" />
+        <DataAnnotationsValidator />
+        <Alert ShowAlert="@ShowErrors" ShowAlertChanged="@((bool value) => ShowErrors = value)" Messages="@Errors" AlertType="alert-danger" />
+        <div class="field">
+            <div class="label-input">
+                <i class="fa fa-envelope"></i>
+                <label>Email</label>
+            </div>
+
+            <InputText id="username" class="input" @bind-Value="loginModel.Email" />
+
+            <ValidationMessage For="@(() => loginModel.Email)" />
+        </div>
+        <div class="field">
+            <div class="label-input">
+                <i class="login__icon fas fa-lock"></i>
+                <label>Password</label>
+            </div>
+            <InputText class="input" type="password" id="password" @bind-Value="loginModel.Password" />
+            <ValidationMessage For="@(() => loginModel.Password)" />
+        </div>
+        <button type="submit" class="button">Log in</button>
+    </EditForm>
+</div>
+
+@code {
+    private UserLoginRequestModel loginModel = new UserLoginRequestModel();
+
+    private bool ShowErrors;
+    private IEnumerable<string> Errors;
+
+    private async Task HandleLogin()
+    {
+        ShowErrors = false;
+
+        var result = await AuthService.Login(loginModel);
+
+        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (result.Successful)
+        {
+            if (user.IsInRole(FacilityManagerRoleName))
+            {
+                NavigationManager.NavigateTo("/pending");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/files");
+            }
+        }
+        else
+        {
+            Errors = result.Errors;
+            ShowErrors = true;
+        }
+    }
+}

@@ -1,0 +1,18 @@
+﻿﻿@using DocuRISE.Client.Pages.Users
+@inherits LayoutComponentBase
+
+<div class="page">
+    <AuthorizeView>
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    </AuthorizeView>
+    <main>
+        <div class="content-body">
+            <LoginDisplay />
+        </div>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

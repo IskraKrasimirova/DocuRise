@@ -1,0 +1,34 @@
+﻿@page "/done"
+@inherits AllFiles
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime jsRun
+@using Microsoft.AspNetCore.Authorization
+@using static DocuRISE.Common.GlobalConstants
+@attribute [Authorize(Roles = FacilityAccountantRoleName)]
+
+
+@{
+    base.BuildRenderTree(__builder);
+}
+
+@code {
+    
+    private readonly string statusDone = "Done";
+    
+
+    protected override Task OnInitializedAsync()
+    {
+        
+        SetStatusDone();
+        return base.OnInitializedAsync();
+    }
+
+    
+
+    private Task SetStatusDone()
+    {
+        filterModel.FilteredByStatus = statusDone;
+        return Task.CompletedTask;
+    }
+}

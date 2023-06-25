@@ -1,0 +1,34 @@
+﻿@if (ShowAlert)
+{
+    <div class="alert @AlertType" role="alert">
+        <div class="d-flex justify-content-between">
+            @foreach (var message in Messages)
+            {
+                <p>@message</p>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="HideAlert"></button>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public bool ShowAlert { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ShowAlertChanged { get; set; }
+
+    [Parameter]
+    public IEnumerable<string> Messages { get; set; }
+
+    [Parameter]
+    public string AlertType { get; set; }
+
+    private void HideAlert()
+    {
+        ShowAlert = false;
+        ShowAlertChanged.InvokeAsync(ShowAlert);
+    }
+}
+

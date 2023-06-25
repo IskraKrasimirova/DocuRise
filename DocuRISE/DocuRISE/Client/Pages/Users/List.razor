@@ -1,0 +1,73 @@
+﻿@page "/users"
+@using DocuRISE.Shared.Models.User
+@using Microsoft.AspNetCore.Authorization
+@using static DocuRISE.Common.GlobalConstants
+@inject HttpClient HttpClient
+@inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
+@attribute [Authorize]
+
+<h1 class="title">Users</h1>
+<br />
+<AuthorizeView Roles="@BothManagerRoles">
+    <div class="row mb-3">
+        <div class="col-md-7">
+            <NavLink href="/register" class="btn btn-sm btn-primary mb-2">Add User</NavLink>
+        </div>
+    </div>
+</AuthorizeView>
+
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="table-container">
+        <table>
+            <thead clas="table-headers">
+                <tr class="table-row">
+                    <th class="table-col-headers">First name</th>
+                    <th class="table-col-headers">Last name</th>
+                    <th class="table-col-headers">Company name</th>
+                    <th class="table-col-headers">Role</th>
+                    <th class="table-col-headers">Email</th>
+                </tr>
+            </thead>
+            <tbody class="table-body">
+                @foreach (var user in users)
+                {
+                    <tr class="table-row">
+                        <td class="table-col-input">@user.FirstName</td>
+                        <td class="table-col-input">@user.LastName</td>
+                        <td class="table-col-input">@user.CompanyName</td>
+                        <td class="table-col-input">@user.Role</td>
+                        <td class="table-col-input">@user.Email</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    protected List<UserServiceModel> users;
+    private string ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await GetAllUsers();
+    }
+
+    private async Task<List<UserServiceModel>> GetAllUsers()
+    {
+        try
+        {
+            return await HttpClient.GetFromJsonAsync<List<UserServiceModel>>("/api/users");
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "An error occurred while retrieving users.";
+            return new List<UserServiceModel>();
+        }
+    }
+}

@@ -1,0 +1,81 @@
+﻿@page "/edit/{id}"
+@attribute [Authorize(Roles = FacilityManagerRoleName)]
+@using DocuRISE.Shared.Models.Document
+@using DocuRISE.Shared.Models.User
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@using static DocuRISE.Common.GlobalConstants
+
+<div class="container">
+    <EditForm class="form" Model="@editModel" OnValidSubmit="HandleEdit">
+        <h2 class="title">Edit</h2>
+        <DataAnnotationsValidator />
+        <Alert ShowAlert="@ShowErrors" ShowAlertChanged="@((bool value) => ShowErrors = value)" Messages="@Errors" AlertType="alert-danger" />
+        <Alert ShowAlert="@ShowSuccess" ShowAlertChanged="@((bool value) => ShowSuccess = value)" Messages="@Success" AlertType="alert-success" />
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-file"></i>
+                <label>Document number</label>
+            </div>
+            <InputNumber id="documentNumber" class="input" @bind-Value="editModel.DocumentNumber" />
+            <ValidationMessage For="@(() => editModel.DocumentNumber)" />
+        </div>
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-calendar-alt"></i>
+                <label>Issue date </label>
+            </div>
+            <InputDate id="issueDate" class="input" @bind-Value="editModel.IssueDate" />
+            <ValidationMessage For="@(() => editModel.IssueDate)" />
+        </div>
+        <div class="field">
+            <div class="label-input">
+                <i class="fas fa-comment"></i>
+                <label>Grounds </label>
+            </div>
+            <InputText id="grounds" class="input" @bind-Value="editModel.Grounds" />
+            <ValidationMessage For="@(() => editModel.Grounds)" />
+        </div>
+        <button type="submit" class="button">Save</button>
+    </EditForm>
+</div>
+
+@code {
+
+    private FileEditFormModel editModel = new FileEditFormModel();
+
+    private bool ShowErrors;
+    private IEnumerable<string> Errors;
+
+    private bool ShowSuccess;
+    private IEnumerable<string> Success;
+
+    
+    [Parameter]
+    public string Id { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        editModel = await HttpClient.GetFromJsonAsync<FileEditFormModel>($"/api/files/edit/{Id}");
+    }
+
+    private async Task HandleEdit()
+    {
+        ShowErrors = false;
+        ShowSuccess = false;
+        var result = await HttpClient.PutAsJsonAsync("/api/files",editModel);
+        var checkResult = await result.Content.ReadFromJsonAsync<EditResult>();
+        if (checkResult.Successful)
+        {
+            Success = checkResult.Success;
+            ShowSuccess = true;
+            NavigationManager.NavigateTo("/allfiles");
+        }
+        else
+        {
+            Errors = checkResult.Errors;
+            ShowErrors = true;
+        }
+    }
+}
