@@ -1,6 +1,7 @@
 ## Introduction
 
-This is a RISE | Bootcamp DocuWare team project
+This is a RISE | Bootcamp by Nemetschek DocuWare final team project.
+Used technology - Blazor.
 
 # Reference links
 
